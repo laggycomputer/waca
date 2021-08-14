@@ -22,7 +22,7 @@ app.get("/version", (req, res) => res.json({ version, program: "waca" }))
 app.get("/boards", (req, res) => {
     exec(req.app.locals.arduino_invocation + " board listall --format json", (error, stdout, stderr) => {
         if (error) {
-            res.status(500).json({error: "arduino-cli did not exit properly", stderr: stderr})
+            res.status(500).json({ error: "arduino-cli did not exit properly", stderr: stderr })
             return
         }
         res.json(JSON.parse(stdout).boards)
@@ -32,7 +32,7 @@ app.get("/boards", (req, res) => {
 app.get("/libraries", (req, res) => {
     exec(req.app.locals.arduino_invocation + " lib list --format json", (error, stdout, stderr) => {
         if (error) {
-            res.status(500).json({error: "arduino-cli did not exit properly", stderr: stderr})
+            res.status(500).json({ error: "arduino-cli did not exit properly", stderr: stderr })
             return
         }
         let resp = JSON.parse(stdout)

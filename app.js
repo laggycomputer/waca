@@ -26,7 +26,7 @@ app.get("/boards", (req, res) => {
             return
         }
         console.log(stdout)
-        res.json(JSON.parse(stdout))
+        res.json(JSON.parse(stdout).boards)
     })
 })
 

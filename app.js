@@ -5,7 +5,6 @@ const { exec } = require("child_process")
 const tmp = require("tmp")
 
 const config = require("./config")
-const port = !isNaN(Number(process.argv[2])) ? Number(process.argv[2]) : config.port
 app.locals.is_verbose = Boolean(config.verbose)
 const { version } = require("./package.json")
 
@@ -90,5 +89,5 @@ exec(config.arduino_invocation + " version", (error) => {
         console.error(`FATAL: failed to invoke arduino-cli:\n${error}`)
         return
     }
-    app.listen(port, () => { console.log(`Ready at port ${port}`) })
+    app.listen(config.port || 80, () => { console.log(`Ready at port ${config.port || 80}`) })
 })

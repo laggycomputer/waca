@@ -53,6 +53,13 @@ app.post("/compile", express.json(), (req, res) => {
     const board_fqbn = typeof (req.body.board) === "string" ? req.body.board : "arduino:avr:uno"
     const sketch = req.body.sketch
 
+    // test for #include "./*" or #include "../*" and complain to prevent users from searching the filesystem
+    // TODO: this doesn't forgive string literals with matching contents
+    if (/#\s*include\s*"\.*\/.*"/.test(sketch)) {
+        res.status(400).send(
+            "relative quote imports are not allowed, omit ./ in front of quote import directives\n"
+             + "for example, #include \"./foo.h\" should be #include \"foo.h\"")
+    }
     const dir_obj = tmp.dirSync({ prefix: "waca-sketch-", unsafeCleanup: true })
     const cleanup = dir_obj.removeCallback
     try {

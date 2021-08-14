@@ -60,6 +60,11 @@ app.post("/compile", express.json(), (req, res) => {
 
     const arduino_verbose = req.body.verbose === "true"
     const board_fqbn = typeof (req.body.board) === "string" ? req.body.board : "arduino:avr:uno"
+
+    let warnings = typeof (req.body.warnings) === "string" ? req.body.warnings : "default"
+    const is_warning_level_valid = ["none", "default", "more", "all"].includes(warnings)
+    if (!is_warning_level_valid) res.send(400).send("invalid warning level")
+
     const sketch = req.body.sketch
 
     // test for #include "./*" or #include "../*" and complain to prevent users from searching the filesystem

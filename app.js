@@ -58,7 +58,7 @@ app.get("/libraries", (req, res) => {
 app.post("/compile", express.json(), (req, res) => {
     if (req.app.locals.is_verbose) console.log("info: responding to POST /compile")
 
-    const use_verbose = req.body.verbose === "true"
+    const arduino_verbose = req.body.verbose === "true"
     const board_fqbn = typeof (req.body.board) === "string" ? req.body.board : "arduino:avr:uno"
     const sketch = req.body.sketch
 

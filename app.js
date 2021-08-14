@@ -25,7 +25,6 @@ app.get("/boards", (req, res) => {
             res.status(500).json({error: "arduino-cli did not exit properly", stderr: stderr})
             return
         }
-        console.log(stdout)
         res.json(JSON.parse(stdout).boards)
     })
 })

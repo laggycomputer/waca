@@ -79,6 +79,23 @@ app.post("/compile", express.json(), (req, res) => {
     try {
         if (dir_obj.err) throw dir_obj.err
         if (req.app.locals.is_verbose) console.log("info: creating temp dir " + dir_obj.name)
+        const sketch_filename_split = dir_obj.name.split(path.sep)
+        const sketch_filename = sketch_filename_split[sketch_filename_split.length - 1] + ".ino"
+
+        try {
+            fs.writeFileSync(dir_obj.name + path.sep + sketch_filename, sketch)
+        } catch (err) {
+            res.status(500).send("failed to save sketch to disk.")
+            if (req.app.locals.is_verbose) console.warn("warn: failed to save a sketch to disk. this should not happen.")
+        }
+
+        try {
+            fs.mkdirSync(dir_obj.name + path.sep + "compiled")
+        } catch (err) {
+            res.status(500).send("failed to create compilation folder.")
+            if (req.app.locals.is_verbose) console.warn("warn: failed to create a folder. this should not happen.")
+        }
+
     } catch (err) {
         res.status(500).send("failed to allocate temporary sketch folder")
         console.warn("warn: failed to create a temp dir. this is not normal.")

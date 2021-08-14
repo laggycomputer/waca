@@ -2,6 +2,7 @@ const express = require("express")
 const app = express()
 
 const { exec } = require("child_process")
+const tmp = require("tmp")
 
 const config = require("./config")
 const port = !isNaN(Number(process.argv[2])) ? Number(process.argv[2]) : config.port
@@ -45,6 +46,24 @@ app.get("/libraries", (req, res) => {
         }
         res.json(to_send)
     })
+})
+
+app.post("/compile", express.json(), (req, res) => {
+    const use_verbose = req.body.verbose === "true"
+    const board_fqbn = typeof (req.body.board) === "string" ? req.body.board : "arduino:avr:uno"
+    const sketch = req.body.sketch
+
+    const dir_obj = tmp.dirSync({ prefix: "waca-sketch-", unsafeCleanup: true })
+    const cleanup = dir_obj.removeCallback
+    try {
+        if (dir_obj.err) throw dir_obj.err
+        res.send(dir_obj.name)
+    } catch (err) {
+        res.status(500).send("failed to allocate temporary sketch folder")
+    }
+    finally {
+        cleanup()
+    }
 })
 
 exec(config.arduino_invocation + " version", (error) => {

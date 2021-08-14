@@ -29,6 +29,24 @@ app.get("/boards", (req, res) => {
     })
 })
 
+app.get("/libraries", (req, res) => {
+    exec(req.app.locals.arduino_invocation + " lib list --format json", (error, stdout, stderr) => {
+        if (error) {
+            res.status(500).json({error: "arduino-cli did not exit properly", stderr: stderr})
+            return
+        }
+        let resp = JSON.parse(stdout)
+        let to_send = []
+        for (let lib of resp) {
+            lib.library.install_dir = undefined
+            lib.library.source_dir = undefined
+            lib.library.examples = undefined
+            to_send.push(lib)
+        }
+        res.json(to_send)
+    })
+})
+
 exec(config.arduino_invocation + " version", (error) => {
     if (error) {
         console.error(`FATAL: failed to invoke arduino-cli:\n${error}`)

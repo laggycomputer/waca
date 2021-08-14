@@ -1,7 +1,7 @@
 const express = require("express")
 const app = express()
 
-const { exec } = require("child_process")
+const { exec, execSync } = require("child_process")
 const tmp = require("tmp")
 
 const config = require("./config")
@@ -84,10 +84,11 @@ app.post("/compile", express.json(), (req, res) => {
     }
 })
 
-exec(config.arduino_invocation + " version", (error) => {
-    if (error) {
-        console.error(`FATAL: failed to invoke arduino-cli:\n${error}`)
-        return
-    }
-    app.listen(config.port || 80, () => { console.log(`Ready at port ${config.port || 80}`) })
-})
+try {
+    execSync(config.arduino_invocation + " version")
+} catch (err) {
+    console.error(`FATAL: failed to invoke arduino-cli:\n${err}`)
+    process.exit(-1)
+}
+
+app.listen(config.port || 80, () => { console.log(`Ready at port ${config.port || 80}`) })

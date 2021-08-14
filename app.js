@@ -37,7 +37,7 @@ app.get("/boards", (req, res) => {
 
 app.get("/libraries", (req, res) => {
     if (req.app.locals.is_verbose) console.log("info: responding to GET /libraries")
-    
+
     exec(req.app.locals.arduino_invocation + " lib list --format json", (error, stdout, stderr) => {
         if (error) {
             res.status(500).json({ error: "arduino-cli did not exit properly", stderr: stderr })

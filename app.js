@@ -5,7 +5,7 @@ const { exec } = require("child_process")
 
 const config = require("./config")
 const port = !isNaN(Number(process.argv[2])) ? Number(process.argv[2]) : config.port
-const { version } = "./package.json"
+const { version } = require("./package.json")
 
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*")

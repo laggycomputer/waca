@@ -23,5 +23,5 @@ exec(config.arduino_invocation + " version", (error) => {
         console.error(`FATAL: failed to invoke arduino-cli:\n${error}`)
         return
     }
-    app.listen(port, () => {console.log(`Ready at port ${port}`)})
+    app.listen(port, () => { console.log(`Ready at port ${port}`) })
 })

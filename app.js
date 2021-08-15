@@ -28,23 +28,19 @@ app.get("/version", (req, res) => {
 app.get("/boards", (req, res) => {
     if (req.app.locals.is_verbose) console.log("info: responding to GET /boards")
 
-    exec(req.app.locals.arduino_invocation + " board listall --format json", (error, stdout, stderr) => {
-        if (error) {
-            res.status(500).json({ error: "arduino-cli did not exit properly", stderr: stderr })
-            return
-        }
+    try {
+        const stdout = execSync(req.app.locals.arduino_invocation + " board listall --format json")
         res.json(JSON.parse(stdout).boards)
-    })
+    } catch (err) {
+        res.status(500).json({ error: "arduino-cli did not exit properly" })
+    }
 })
 
 app.get("/libraries", (req, res) => {
     if (req.app.locals.is_verbose) console.log("info: responding to GET /libraries")
 
-    exec(req.app.locals.arduino_invocation + " lib list --format json", (error, stdout, stderr) => {
-        if (error) {
-            res.status(500).json({ error: "arduino-cli did not exit properly", stderr: stderr })
-            return
-        }
+    try {
+        const stdout = execSync(req.app.locals.arduino_invocation + " lib list --format json")
         let resp = JSON.parse(stdout)
         let to_send = []
         for (let lib of resp) {
@@ -54,7 +50,9 @@ app.get("/libraries", (req, res) => {
             to_send.push(lib)
         }
         res.json(to_send)
-    })
+    } catch (err) {
+        res.status(500).json({ error: "arduino-cli did not exit properly" })
+    }
 })
 
 app.post("/compile", express.json(), (req, res) => {

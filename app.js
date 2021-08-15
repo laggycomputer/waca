@@ -73,6 +73,7 @@ app.post("/compile", express.json(), (req, res) => {
         res.status(400).send(
             "relative quote imports are not allowed, omit ./ in front of quote import directives\n"
             + "for example, #include \"./foo.h\" should be #include \"foo.h\"")
+        return
     }
     try {
         const { name: tmp_dir_name, removeCallback: cleanup } = tmp.dirSync({ prefix: "waca-sketch", unsafeCleanup: true })

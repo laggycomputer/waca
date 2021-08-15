@@ -3,6 +3,8 @@ const app = express()
 
 const { exec, execSync } = require("child_process")
 const tmp = require("tmp")
+const path = require("path")
+const fs = require("fs")
 
 const config = require("./config")
 app.locals.is_verbose = Boolean(config.verbose)
@@ -78,15 +80,17 @@ app.post("/compile", express.json(), (req, res) => {
     const cleanup = dir_obj.removeCallback
     try {
         if (dir_obj.err) throw dir_obj.err
-        if (req.app.locals.is_verbose) console.log("info: creating temp dir " + dir_obj.name)
+        if (req.app.locals.is_verbose) console.log("info: created temp dir " + dir_obj.name)
         const sketch_filename_split = dir_obj.name.split(path.sep)
         const sketch_filename = sketch_filename_split[sketch_filename_split.length - 1] + ".ino"
+        const full_sketch_path = dir_obj.name + path.sep + sketch_filename
 
         try {
-            fs.writeFileSync(dir_obj.name + path.sep + sketch_filename, sketch)
+            fs.writeFileSync(full_sketch_path, sketch)
         } catch (err) {
             res.status(500).send("failed to save sketch to disk.")
             if (req.app.locals.is_verbose) console.warn("warn: failed to save a sketch to disk. this should not happen.")
+            cleanup(); return
         }
 
         try {
@@ -94,15 +98,35 @@ app.post("/compile", express.json(), (req, res) => {
         } catch (err) {
             res.status(500).send("failed to create compilation folder.")
             if (req.app.locals.is_verbose) console.warn("warn: failed to create a folder. this should not happen.")
+            cleanup(); return
         }
 
+        const verbose = arduino_verbose ? " -v" : ""
+        const cmd = `${req.app.locals.arduino_invocation} compile${verbose} -b ${board_fqbn} --output-dir "${dir_obj.name + path.sep + "compiled"}" --warnings ${warnings} "${full_sketch_path}"`
+        exec(cmd, { cwd: dir_obj.name }, (err, stdout, stderr) => {
+            if (err) {
+                res.status(400).json({ success: false, stdout, stderr })
+                cleanup(); return
+            }
+            stderr = stderr.replaceAll(dir_obj.name + path.sep + sketch_filename, "<sketch path>")
+            stdout = stdout.replaceAll(dir_obj.name + path.sep + sketch_filename, "<sketch path>")
+            try {
+                const compiler_out = fs.readFileSync(`${dir_obj.name}${path.sep}compiled${path.sep}${sketch_filename}.hex`, "base64")
+                res.status(200).json({ success: true, hex: compiler_out, stdout, stderr })
+            } catch (err) {
+                res.status(500).send("failed to read compiler output.")
+                // not warning because this is basically only the result of manual tampering
+            } finally {
+                cleanup()
+            }
+        })
     } catch (err) {
         res.status(500).send("failed to allocate temporary sketch folder")
         console.warn("warn: failed to create a temp dir. this is not normal.")
     }
     finally {
-        cleanup()
         if (req.app.locals.is_verbose) console.log("info: cleaned up temp dir " + dir_obj.name)
+        cleanup()
     }
 })
 

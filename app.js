@@ -100,14 +100,12 @@ app.post("/compile", express.json(), (req, res) => {
         const verbose = arduino_verbose ? " -v" : ""
         const cmd = `${req.app.locals.arduino_invocation} compile${verbose} -b ${board_fqbn} --output-dir "${tmp_dir_name + path.sep + "compiled"}" --warnings ${warnings} "${full_sketch_path}"`
         exec(cmd, { cwd: tmp_dir_name }, (err, stdout, stderr) => {
+            if (stdout) stdout = stdout.replace(full_sketch_path, "<sketch path>")
+            if (stderr) stderr = stderr.replace(full_sketch_path, "<sketch path>")
             if (err) {
                 res.status(400).json({ success: false, stdout, stderr })
                 cleanup(); return
             }
-            stderr = stderr.replaceAll(dir_obj.name + path.sep + sketch_filename, "<sketch path>")
-            stdout = stdout.replaceAll(dir_obj.name + path.sep + sketch_filename, "<sketch path>")
-            stderr = stderr.replaceAll(full_sketch_path, "<sketch path>")
-            stdout = stdout.replaceAll(full_sketch_path, "<sketch path>")
             try {
                 const compiler_out = fs.readFileSync(`${tmp_dir_name}${path.sep}compiled${path.sep}${sketch_filename}.hex`, "base64")
                 res.status(200).json({ success: true, hex: compiler_out, stdout, stderr })

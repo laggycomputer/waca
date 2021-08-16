@@ -86,6 +86,17 @@ app.post("/compile", express.json(), (req, res) => {
             cleanup(); return
         }
 
+        if (req.query.include_lcd_deps && board_fqbn.toLowerCase().startsWith("attinycore:avr")) {
+            try {
+                for (let file of fs.readdirSync("extra_libs")) {
+                    fs.copyFileSync("extra_libs" + path.sep + file, tmp_dir_name + path.sep + file)
+                }
+            } catch (err) {
+                res.status(500).send("failed to copy some files.")
+                cleanup(); return
+            }
+        }
+
         try {
             fs.mkdirSync(tmp_dir_name + path.sep + "compiled")
         } catch (err) {

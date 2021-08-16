@@ -55,6 +55,13 @@ app.get("/libraries", (req, res) => {
     }
 })
 
+function replace_all_instances(s, sub, to) {
+    while (s.includes(sub)) {
+        s = s.replace(sub, to)
+    }
+    return s
+}
+
 app.post("/compile", express.json(), (req, res) => {
     if (req.app.locals.is_verbose) console.log("info: responding to POST /compile")
 
@@ -108,12 +115,8 @@ app.post("/compile", express.json(), (req, res) => {
         const verbose = arduino_verbose ? " -v" : ""
         const cmd = `${req.app.locals.arduino_invocation} compile${verbose} -b ${board_fqbn} --output-dir "${tmp_dir_name + path.sep + "compiled"}" --warnings none "${full_sketch_path}"`
         exec(cmd, { cwd: tmp_dir_name }, (err, stdout, stderr) => {
-            while (stdout.includes(tmp_dir_name)) {
-                stdout = stdout.replace(tmp_dir_name, "<sketch folder>")
-            }
-            while (stderr.includes(tmp_dir_name)) {
-                stderr = stderr.replace(tmp_dir_name, "<sketch folder>")
-            }
+            stdout = replace_all_instances(replace_all_instances(stdout, full_sketch_path, "<main sketch file>"), tmp_dir_name, "<sketch folder>")
+            stderr = replace_all_instances(replace_all_instances(stderr, full_sketch_path, "<main sketch file>"), tmp_dir_name, "<sketch folder>")
 
             if (err) {
                 res.status(400).json({ success: false, stdout, stderr })

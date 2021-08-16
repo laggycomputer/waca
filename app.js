@@ -61,10 +61,6 @@ app.post("/compile", express.json(), (req, res) => {
     const arduino_verbose = req.body.verbose === "true"
     const board_fqbn = typeof (req.body.board) === "string" ? req.body.board : "arduino:avr:uno"
 
-    let warnings = typeof (req.body.warnings) === "string" ? req.body.warnings : "default"
-    const is_warning_level_valid = ["none", "default", "more", "all"].includes(warnings)
-    if (!is_warning_level_valid) res.send(400).send("invalid warning level")
-
     const sketch = req.body.sketch
 
     // test for #include "./*" or #include "../*" and complain to prevent users from searching the filesystem
@@ -99,7 +95,7 @@ app.post("/compile", express.json(), (req, res) => {
         }
 
         const verbose = arduino_verbose ? " -v" : ""
-        const cmd = `${req.app.locals.arduino_invocation} compile${verbose} -b ${board_fqbn} --output-dir "${tmp_dir_name + path.sep + "compiled"}" --warnings ${warnings} "${full_sketch_path}"`
+        const cmd = `${req.app.locals.arduino_invocation} compile${verbose} -b ${board_fqbn} --output-dir "${tmp_dir_name + path.sep + "compiled"}" --warnings none "${full_sketch_path}"`
         exec(cmd, { cwd: tmp_dir_name }, (err, stdout, stderr) => {
             while (stdout.includes(tmp_dir_name)) {
                 stdout = stdout.replace(tmp_dir_name, "<sketch folder>")

@@ -3,6 +3,7 @@ const app = express()
 
 const { exec, execSync } = require("child_process")
 const tmp = require("tmp")
+tmp.setGracefulCleanup(true)
 const path = require("path")
 const fs = require("fs")
 

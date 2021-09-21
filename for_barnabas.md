@@ -3,7 +3,7 @@ This project was initially created to replace Chromeduino's compile server for A
 Specifically, `waca` was created because Chromeduino was... less than perfect with library and board detection. For those looking to fulfill all the dependencies Barnabas Blocks requires, see below:
 
 1. Install `arduino-cli` [here](https://arduino.github.io/arduino-cli/latest/installation/). You do not need to modify any configs. If you choose not to add it to PATH or place it somewhere already on PATH, you must specify its absolute path in `config.js`.
-2. Run `npm install` in the directory of this project. If you are in production and intend to develop you can add `--production=true`.
+2. Run `npm install` in the directory of this project. If you are in production and do not intend to develop you can add `--production=true`.
 3. Install ATTinyCore, the board defintion including ezDisplay: `arduino-cli --additional-urls http://drazzy.com/package_drazzy.com_index.json core install ATTinyCore:avr`
 4. Install Tiny4kOLED: `arduino-cli lib install Tiny4kOLED@2.1.1`
 5. Install some more fonts for good measure: `arduino-cli lib install TinyOLED-Fonts@1.2.0`

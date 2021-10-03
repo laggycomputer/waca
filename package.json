@@ -1,6 +1,6 @@
 {
   "name": "waca",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Web Arduino Compile API",
   "main": "app.js",
   "scripts": {

@@ -1,11 +1,13 @@
-const express = require("express")
-const app = express()
-
-const { exec, execSync } = require("child_process")
+const { execSync } = require("child_process")
+const util = require("util")
+const exec = util.promisify(require("child_process").exec)
 const tmp = require("tmp")
 tmp.setGracefulCleanup(true)
 const path = require("path")
-const fs = require("fs")
+const fs = require("fs/promises")
+
+const express = require("express")
+const app = express()
 
 const config = require("./config")
 app.locals.is_verbose = Boolean(config.verbose)
@@ -13,7 +15,7 @@ const { version } = require("./package.json")
 
 app.locals.arduino_invocation = config.arduino_invocation
 
-app.use(function (req, res, next) {
+app.use((_req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*")
     res.header("Access-Control-Allow-Headers", "*")
     next()
@@ -22,15 +24,15 @@ app.use(function (req, res, next) {
 app.set("trust proxy", 1)
 
 app.get("/version", (req, res) => {
-    if (req.app.locals.is_verbose) console.log("info: responding to GET /version")
+    if (req.app.locals.is_verbose) { console.log("info: responding to GET /version") }
     res.json({ version, program: "waca" })
 })
 
-app.get("/boards", (req, res) => {
-    if (req.app.locals.is_verbose) console.log("info: responding to GET /boards")
+app.get("/boards", async (req, res) => {
+    if (req.app.locals.is_verbose) { console.log("info: responding to GET /boards") }
 
     try {
-        const stdout = execSync(req.app.locals.arduino_invocation + " board listall --format json")
+        const { stdout } = await exec(req.app.locals.arduino_invocation + " board listall --format json")
         res.json(JSON.parse(stdout).boards)
     } catch (err) {
         res.status(500).json({ error: "arduino-cli did not exit properly" })
@@ -38,7 +40,7 @@ app.get("/boards", (req, res) => {
 })
 
 app.get("/libraries", (req, res) => {
-    if (req.app.locals.is_verbose) console.log("info: responding to GET /libraries")
+    if (req.app.locals.is_verbose) { console.log("info: responding to GET /libraries") }
 
     try {
         const stdout = execSync(req.app.locals.arduino_invocation + " lib list --format json")
@@ -63,8 +65,8 @@ function replace_all_instances(s, sub, to) {
     return s
 }
 
-app.post("/compile", express.json(), (req, res) => {
-    if (req.app.locals.is_verbose) console.log("info: responding to POST /compile")
+app.post("/compile", express.json(), async (req, res) => {
+    if (req.app.locals.is_verbose) { console.log("info: responding to POST /compile") }
 
     const arduino_verbose = req.body.verbose === "true"
     const board_fqbn = typeof (req.body.board) === "string" ? req.body.board : "arduino:avr:uno"
@@ -80,24 +82,30 @@ app.post("/compile", express.json(), (req, res) => {
         return
     }
     try {
-        const { name: tmp_dir_name, removeCallback: cleanup } = tmp.dirSync({ prefix: "waca-sketch", unsafeCleanup: true })
-        if (req.app.locals.is_verbose) console.log("info: created temp dir " + tmp_dir_name)
+        const { name: tmp_dir_name, removeCallback: cleanup } = await new Promise((resolve, reject) => {
+            tmp.dir({ prefix: "waca-sketch", unsafeCleanup: true }, (err, dir, rm) => {
+                if (err) { return reject(err) }
+
+                resolve({ name: dir, removeCallback: rm })
+            })
+        })
+        if (req.app.locals.is_verbose) { console.log("info: created temp dir " + tmp_dir_name) }
         const sketch_filename_split = tmp_dir_name.split(path.sep)
         const sketch_filename = sketch_filename_split[sketch_filename_split.length - 1] + ".ino"
         const full_sketch_path = tmp_dir_name + path.sep + sketch_filename
 
         try {
-            fs.writeFileSync(full_sketch_path, sketch)
+            await fs.writeFile(full_sketch_path, sketch)
         } catch (err) {
             res.status(500).send("failed to save sketch to disk.")
-            if (req.app.locals.is_verbose) console.warn("warn: failed to save a sketch to disk. this should not happen.")
+            if (req.app.locals.is_verbose) { console.warn("warn: failed to save a sketch to disk. this should not happen.") }
             cleanup(); return
         }
 
         if (req.query.include_lcd_deps && board_fqbn.toLowerCase().startsWith("attinycore:avr")) {
             try {
-                for (let file of fs.readdirSync("extra_libs")) {
-                    fs.copyFileSync("extra_libs" + path.sep + file, tmp_dir_name + path.sep + file)
+                for (const file of await fs.readdir("extra_libs")) {
+                    await fs.copyFile("extra_libs" + path.sep + file, tmp_dir_name + path.sep + file)
                 }
             } catch (err) {
                 res.status(500).send("failed to copy some files.")
@@ -106,33 +114,37 @@ app.post("/compile", express.json(), (req, res) => {
         }
 
         try {
-            fs.mkdirSync(tmp_dir_name + path.sep + "compiled")
+            await fs.mkdir(tmp_dir_name + path.sep + "compiled")
         } catch (err) {
             res.status(500).send("failed to create compilation folder.")
-            if (req.app.locals.is_verbose) console.warn("warn: failed to create a folder. this should not happen.")
+            if (req.app.locals.is_verbose) { console.warn("warn: failed to create a folder. this should not happen.") }
             cleanup(); return
         }
 
         const verbose = arduino_verbose ? " -v" : ""
         const cmd = `${req.app.locals.arduino_invocation} compile${verbose} -b ${board_fqbn} --output-dir "${tmp_dir_name + path.sep + "compiled"}" --warnings none "${full_sketch_path}"`
-        exec(cmd, { cwd: tmp_dir_name }, (err, stdout, stderr) => {
-            stdout = replace_all_instances(replace_all_instances(stdout, full_sketch_path, "<main sketch file>"), tmp_dir_name, "<sketch folder>")
-            stderr = replace_all_instances(replace_all_instances(stderr, full_sketch_path, "<main sketch file>"), tmp_dir_name, "<sketch folder>")
 
-            if (err) {
-                res.status(400).json({ success: false, stdout, stderr })
-                cleanup(); return
-            }
-            try {
-                const compiler_out = fs.readFileSync(`${tmp_dir_name}${path.sep}compiled${path.sep}${sketch_filename}.hex`, "base64")
-                res.status(200).json({ success: true, hex: compiler_out, stdout, stderr })
-            } catch (err) {
-                res.status(500).send("failed to read compiler output.")
-                // not warning because this is basically only the result of manual tampering
-            } finally {
-                cleanup()
-            }
-        })
+        let stdout, stderr
+
+        try {
+            ({ stdout, stderr } = await exec(cmd, { cwd: tmp_dir_name }))
+        } catch (err) {
+            res.status(400).json({ success: false, stdout: err.stdout, stderr: err.stderr })
+            cleanup(); return
+        }
+
+        stdout = replace_all_instances(replace_all_instances(stdout, full_sketch_path, "<main sketch file>"), tmp_dir_name, "<sketch folder>")
+        stderr = replace_all_instances(replace_all_instances(stderr, full_sketch_path, "<main sketch file>"), tmp_dir_name, "<sketch folder>")
+
+        try {
+            const compiler_out = await fs.readFile(`${tmp_dir_name}${path.sep}compiled${path.sep}${sketch_filename}.hex`, "base64")
+            res.status(200).json({ success: true, hex: compiler_out, stdout, stderr })
+        } catch (err) {
+            res.status(500).send("failed to read compiler output.")
+            // not warning because this is basically only the result of manual tampering
+        } finally {
+            cleanup()
+        }
     } catch (err) {
         res.status(500).send("failed to allocate temporary sketch folder")
         console.warn("warn: failed to create a temp dir. this is not normal.")

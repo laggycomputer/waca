@@ -157,4 +157,5 @@ try {
     process.exit(-1)
 }
 
-app.listen(config.port || 80, () => { console.log(`Ready at port ${config.port || 80}`) })
+const port = config.port || 80
+app.listen(port, () => { console.log(`Ready at port ${port}`) })

@@ -1,4 +1,5 @@
 # Introduction
+
 This project was initially created to replace Chromeduino's compile server for Arduino and its faults. Its purpose was to replace its predecessor's place in the Barnabas Blocks toolchain, so this project is designed to behave identically in basic function.
 Specifically, `waca` was created because Chromeduino was... less than perfect with library and board detection. For those looking to fulfill all the dependencies Barnabas Blocks requires, see below:
 

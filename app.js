@@ -1,4 +1,3 @@
-const { execSync } = require("child_process")
 const exec = require("util").promisify(require("child_process").exec)
 const tmp = require("tmp")
 tmp.setGracefulCleanup(true)
@@ -39,11 +38,11 @@ app.get("/boards", async (req, res) => {
     }
 })
 
-app.get("/libraries", (req, res) => {
+app.get("/libraries", async (req, res) => {
     if (req.app.locals.isVerbose) { console.log("info: responding to GET /libraries") }
 
     try {
-        const stdout = execSync(req.app.locals.arduinoInvocation + " lib list --format json")
+        const { stdout } = await exec(req.app.locals.arduinoInvocation + " lib list --format json")
         let resp = JSON.parse(stdout)
         let toSend = []
         for (const lib of resp) {
@@ -151,12 +150,16 @@ app.post("/compile", express.json(), async (req, res) => {
     }
 })
 
-try {
-    execSync(config.arduinoInvocation + " version")
-} catch (err) {
-    console.error(`FATAL: failed to invoke arduino-cli:\n${err}`)
-    process.exit(-1)
+async function main() {
+    try {
+        await exec(config.arduinoInvocation + " version")
+    } catch (err) {
+        console.error(`FATAL: failed to invoke arduino-cli:\n${err}`)
+        process.exit(-1)
+    }
+
+    const port = config.port || 80
+    app.listen(port, () => { console.log(`Ready at port ${port}`) })
 }
 
-const port = config.port || 80
-app.listen(port, () => { console.log(`Ready at port ${port}`) })
+main()

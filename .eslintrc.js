@@ -1,17 +1,27 @@
 module.exports = {
+    "plugins": [
+        "@stylistic"
+    ],
     "env": {
         "es2021": true,
         "node": true
     },
     "extends": "eslint:recommended",
+    "overrides": [
+    ],
     "parserOptions": {
-        "ecmaVersion": 12,
+        "ecmaVersion": "latest",
         "sourceType": "module"
     },
     "rules": {
-        "indent": [
+        "@stylistic/indent": [
             "error",
-            4
+            4,
+            { "SwitchCase": 1 }
+        ],
+        "linebreak-style": [
+            "error",
+            "unix"
         ],
         "quotes": [
             "error",

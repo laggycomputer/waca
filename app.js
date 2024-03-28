@@ -68,7 +68,7 @@ app.post("/compile", express.json(), async (req, res) => {
     if (req.app.locals.isVerbose) { console.log("info: responding to POST /compile") }
 
     const arduinoVerbose = req.body.verbose === "true"
-    const boardFQBN = typeof (req.body.board) === "string" ? req.body.board : "arduino:avr:uno"
+    const boardFQBN = req.body.board ?? "arduino:avr:uno"
 
     const sketch = req.body.sketch
 

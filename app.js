@@ -7,6 +7,7 @@ const fs = require("fs/promises")
 const express = require("express")
 const app = express()
 const shlex = require("shlex")
+const yaml = require("yaml")
 
 const config = require("./config")
 app.locals.isVerbose = Boolean(config.verbose)
@@ -125,15 +126,28 @@ app.post("/compile", express.json(), async (req, res) => {
 
         let stdout, stderr
 
+        const sanitize = string => {
+            for (const [replaceFrom, replaceTo] of [
+                [fullSketchPath, "<main sketch file>"],
+                [tmpDir, "<sketch folder>"],
+                [req.app.locals.arduinoCLIConfig.directories.data, "<libraries folder>"],
+                [req.app.locals.arduinoCLIConfig.directories.user, "<libraries folder>"],
+            ]) {
+                string = replaceAll(string, replaceFrom, replaceTo)
+            }
+
+            return string
+        }
+
         try {
             ({ stdout, stderr } = await exec(cmd, { cwd: tmpDir }))
         } catch (err) {
-            res.status(400).json({ success: false, stdout: err.stdout, stderr: err.stderr })
+            res.status(400).json({ success: false, stdout: sanitize(err.stdout), stderr: sanitize(err.stderr) })
             cleanup(); return
         }
 
-        stdout = replaceAll(replaceAll(stdout, fullSketchPath, "<main sketch file>"), tmpDir, "<sketch folder>")
-        stderr = replaceAll(replaceAll(stderr, fullSketchPath, "<main sketch file>"), tmpDir, "<sketch folder>")
+        stdout = sanitize(stdout)
+        stderr = sanitize(stderr)
 
         try {
             const compilerOut = await fs.readFile(path.join(tmpDir, "compiled", sketchFilename + ".hex"), "base64")
@@ -153,6 +167,8 @@ app.post("/compile", express.json(), async (req, res) => {
 async function main() {
     try {
         await exec(`${config.arduinoInvocation} version`)
+
+        app.locals.arduinoCLIConfig = yaml.parse(await exec(`${config.arduinoInvocation} config dump`).then(r => r.stdout))
     } catch (err) {
         console.error(`FATAL: failed to invoke arduino-cli:\n${err}`)
         process.exit(-1)

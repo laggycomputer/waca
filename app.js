@@ -1,6 +1,5 @@
 const { execSync } = require("child_process")
-const util = require("util")
-const exec = util.promisify(require("child_process").exec)
+const exec = require("util").promisify(require("child_process").exec)
 const tmp = require("tmp")
 tmp.setGracefulCleanup(true)
 const path = require("path")

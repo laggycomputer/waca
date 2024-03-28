@@ -1,5 +1,5 @@
 module.exports = {
     "arduinoInvocation": "arduino-cli",
-    "port": 1337,
+    "port": 80,
     "verbose": true
 }

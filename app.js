@@ -43,15 +43,15 @@ app.get("/libraries", async (req, res) => {
 
     try {
         const { stdout } = await exec(req.app.locals.arduinoInvocation + " lib list --format json")
-        let resp = JSON.parse(stdout)
-        let toSend = []
-        for (const lib of resp) {
-            lib.library["install_dir"] = undefined
-            lib.library["source_dir"] = undefined
-            lib.library["examples"] = undefined
-            toSend.push(lib)
-        }
-        res.json(toSend)
+        res.json(
+            JSON.parse(stdout).map(lib => {
+                delete lib.library["install_dir"]
+                delete lib.library["source_dir"]
+                delete lib.library["examples"]
+
+                return lib
+            })
+        )
     } catch (err) {
         res.status(500).json({ error: "arduino-cli did not exit properly" })
     }

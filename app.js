@@ -152,7 +152,7 @@ app.post("/compile", express.json(), async (req, res) => {
 
 async function main() {
     try {
-        await exec(config.arduinoInvocation + " version")
+        await exec(`${config.arduinoInvocation} version`)
     } catch (err) {
         console.error(`FATAL: failed to invoke arduino-cli:\n${err}`)
         process.exit(-1)

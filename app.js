@@ -7,6 +7,7 @@ const fs = require("fs/promises")
 
 const express = require("express")
 const app = express()
+const shlex = require("shlex")
 
 const config = require("./config")
 app.locals.isVerbose = Boolean(config.verbose)
@@ -121,7 +122,7 @@ app.post("/compile", express.json(), async (req, res) => {
         }
 
         const verbose = arduinoVerbose ? " -v" : ""
-        const cmd = `${req.app.locals.arduinoInvocation} compile${verbose} -b ${boardFQBN} --output-dir "${compiledSubdir}" --warnings none "${fullSketchPath}"`
+        const cmd = `${req.app.locals.arduinoInvocation} compile${verbose} -b ${boardFQBN} --output-dir ${shlex.quote(compiledSubdir)} --warnings none ${shlex.quote(fullSketchPath)}`
 
         let stdout, stderr
 

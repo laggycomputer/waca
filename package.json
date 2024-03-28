@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "express": "^4.19.2",
+    "shlex": "^2.1.2",
     "tmp": "^0.2.3"
   }
 }

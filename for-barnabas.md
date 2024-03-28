@@ -13,6 +13,11 @@ Specifically, `waca` was created because Chromeduino was... less than perfect wi
 3. Install some more fonts for good measure: `arduino-cli lib install TinyOLED-Fonts@1.2.0`
 4. To install [`tiny-i2c`](https://github.com/technoblogy/tiny-i2c), we need to replicate Arduino IDE's library installation from .zip mechanic. Run `arduino-cli config dump` and look for the "user" folder under the directories section. Move there and create a libraries folder (which should exist already anyways). Then download the [TinyI2C ZIP](https://github.com/technoblogy/tiny-i2c/archive/refs/heads/master.zip), extract out `tiny-i2c-master/tiny-i2c`, and place the latter directory in the libraries folder.
 
+## esp8266
+
+1. Install board definition: `arduino-cli core install esp8266:esp8266 --additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json`
+2. Install WebSockets library: `arduino-cli lib install WebSockets`
+
 ## Run server
 
 The dependencies are ready. Run `node app.js` in this project to start the server. You may wish to specify a different port or verbosity but these settings are fine as is for production.

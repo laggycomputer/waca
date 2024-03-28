@@ -89,12 +89,11 @@ app.post("/compile", express.json(), async (req, res) => {
             })
         })
         if (req.app.locals.isVerbose) { console.log("info: created temp dir " + tmpDir) }
-        const sketchFilenameSplit = tmpDir.split(path.sep)
-        const sketchFilename = sketchFilenameSplit[sketchFilenameSplit.length - 1] + ".ino"
-        const fullSketchPath = tmpDir + path.sep + sketchFilename
+        const sketchFilename = path.basename(tmpDir) + ".ino"
+        const fullSketchPath = path.resolve(path.join(tmpDir, sketchFilename))
 
         try {
-            await fs.writeFile(fullSketchPath, sketch)
+            await fs.writeFile(fullSketchPath, sketch ?? "")
         } catch (err) {
             res.status(500).send("failed to save sketch to disk.")
             if (req.app.locals.isVerbose) { console.warn("warn: failed to save a sketch to disk. this should not happen.") }
@@ -112,8 +111,9 @@ app.post("/compile", express.json(), async (req, res) => {
             }
         }
 
+        const compiledSubdir = path.join(tmpDir, "compiled")
         try {
-            await fs.mkdir(tmpDir + path.sep + "compiled")
+            await fs.mkdir(compiledSubdir)
         } catch (err) {
             res.status(500).send("failed to create compilation folder.")
             if (req.app.locals.isVerbose) { console.warn("warn: failed to create a folder. this should not happen.") }
@@ -121,7 +121,7 @@ app.post("/compile", express.json(), async (req, res) => {
         }
 
         const verbose = arduinoVerbose ? " -v" : ""
-        const cmd = `${req.app.locals.arduinoInvocation} compile${verbose} -b ${boardFQBN} --output-dir "${tmpDir + path.sep + "compiled"}" --warnings none "${fullSketchPath}"`
+        const cmd = `${req.app.locals.arduinoInvocation} compile${verbose} -b ${boardFQBN} --output-dir "${compiledSubdir}" --warnings none "${fullSketchPath}"`
 
         let stdout, stderr
 
@@ -136,7 +136,7 @@ app.post("/compile", express.json(), async (req, res) => {
         stderr = replaceAll(replaceAll(stderr, fullSketchPath, "<main sketch file>"), tmpDir, "<sketch folder>")
 
         try {
-            const compilerOut = await fs.readFile(`${tmpDir}${path.sep}compiled${path.sep}${sketchFilename}.hex`, "base64")
+            const compilerOut = await fs.readFile(path.join(tmpDir, "compiled", sketchFilename + ".hex"), "base64")
             res.status(200).json({ success: true, hex: compilerOut, stdout, stderr })
         } catch (err) {
             res.status(500).send("failed to read compiler output.")

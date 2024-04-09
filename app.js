@@ -150,7 +150,8 @@ app.post("/compile", express.json(), async (req, res) => {
         stderr = sanitize(stderr)
 
         try {
-            const compilerOut = await fs.readFile(path.join(tmpDir, "compiled", sketchFilename + ".hex"), "base64")
+            const compilerOutputPath = boardFQBN.startsWith("esp8266:esp8266:") ? sketchFilename + ".bin" : sketchFilename + ".hex"
+            const compilerOut = await fs.readFile(path.join(tmpDir, "compiled", compilerOutputPath), "base64")
             res.status(200).json({ success: true, hex: compilerOut, stdout, stderr })
         } catch (err) {
             res.status(500).send("failed to read compiler output.")

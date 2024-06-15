@@ -1,10 +1,10 @@
-const exec = require("util").promisify(require("child_process").exec)
+const exec = require("node:util").promisify(require("node:child_process").exec)
+const path = require("node:path")
+const fs = require("node:fs/promises")
+const process = require("node:process")
+
 const tmp = require("tmp")
 tmp.setGracefulCleanup(true)
-const path = require("path")
-const fs = require("fs/promises")
-const process = require("process")
-
 const express = require("express")
 const app = express()
 const shlex = require("shlex")

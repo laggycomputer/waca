@@ -3,6 +3,7 @@ const tmp = require("tmp")
 tmp.setGracefulCleanup(true)
 const path = require("path")
 const fs = require("fs/promises")
+const process = require("process")
 
 const express = require("express")
 const app = express()
@@ -175,7 +176,7 @@ async function main() {
         process.exit(-1)
     }
 
-    const port = config.port || 80
+    const port = process.env["PORT"] || config.port || 80
     app.listen(port, () => { console.log(`Ready at port ${port}`) })
 }
 

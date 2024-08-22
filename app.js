@@ -173,8 +173,8 @@ async function main() {
 
         app.locals.arduinoCLIConfig = {
             directories: {
-                data: await exec(`${config.arduinoInvocation} config get directories.data`).then(r => r.stdout),
-                user: await exec(`${config.arduinoInvocation} config get directories.user`).then(r => r.stdout),
+                data: await exec(`${config.arduinoInvocation} config get directories.data`).then(r => r.stdout.trim()),
+                user: await exec(`${config.arduinoInvocation} config get directories.user`).then(r => r.stdout.trim()),
             }
         }
     } catch (err) {

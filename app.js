@@ -171,7 +171,12 @@ async function main() {
     try {
         await exec(`${config.arduinoInvocation} version`)
 
-        app.locals.arduinoCLIConfig = yaml.parse(await exec(`${config.arduinoInvocation} config dump`).then(r => r.stdout))
+        app.locals.arduinoCLIConfig = {
+            directories: {
+                data: await exec(`${config.arduinoInvocation} config get directories.data`).then(r => r.stdout),
+                user: await exec(`${config.arduinoInvocation} config get directories.user`).then(r => r.stdout),
+            }
+        }
     } catch (err) {
         console.error(`FATAL: failed to invoke arduino-cli:\n${err}`)
         process.exit(-1)

@@ -163,6 +163,7 @@ app.post("/compile", express.json(), async (req, res) => {
     } catch (err) {
         res.status(500).send("failed to allocate temporary sketch folder")
         console.warn("warn: failed to create a temp dir. this is not normal.")
+        if (req.app.locals.isVerbose) { console.error(err) }
     }
 })
 

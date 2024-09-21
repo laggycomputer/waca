@@ -5,6 +5,7 @@ Specifically, `waca` was created because Chromeduino was... less than perfect wi
 
 1. Install `arduino-cli` [here](https://arduino.github.io/arduino-cli/latest/installation/). You do not need to modify any configs. If you choose not to add it to PATH or place it somewhere already on PATH, you must specify its absolute path in `config.js`.
 2. Run `npm install` in the directory of this project. If you are in production and do not intend to develop you can add `--production=true`.
+3. Install any libraries you might want to use for AVR boards; most do not come installed by default.
 
 ## ezDisplay
 
